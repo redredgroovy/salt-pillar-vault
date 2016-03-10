@@ -1,0 +1,5 @@
+# Ignore python byte code
+*.pyc
+
+# Ignore vim swap files
+.*.s??
