@@ -171,7 +171,7 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
     # Read the secret map
     try:
         with open(CONF["config"], "r") as raw_yml:
-            secret_map = yaml.safe_load(raw_yml)
+            secret_map = yaml.safe_load(raw_yml) or {}
     except IOError as err:
         LOG.error("Unable to read secret mappings: %s" % err)
         return vault_pillar
