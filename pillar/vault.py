@@ -75,6 +75,7 @@ will be returned.
 
 # Import stock modules
 from __future__ import absolute_import
+import base64
 import logging
 import os
 import yaml
@@ -187,21 +188,26 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
     # Apply the compound filters to determine which secrets to expose for this minion
     ckminions = salt.utils.minions.CkMinions(__opts__)
     for filter, secrets in secret_map.items():
-       if minion_id in ckminions.check_minions(filter, "compound"):
-           for variable, location in secrets.items():
+        if minion_id in ckminions.check_minions(filter, "compound"):
+            for variable, location in secrets.items():
 
-               # Determine if a specific key was requested
-               try:
-                   (path, key) = location.split('?', 1)
-               except ValueError:
-                   (path, key) = (location, None)
+                # Determine if a specific key was requested
+                try:
+                    (path, key) = location.split('?', 1)
+                except ValueError:
+                    (path, key) = (location, None)
 
-               # Return only the key value, if requested, otherwise return the entire
-               # secret json structure
-               secret = conn.read(path)
-               if key:
-                   secret = secret["data"].get(key, None)
+                # Return only the key value, if requested, otherwise return
+                # the entire secret json structure
+                secret = conn.read(path)
+                if key:
+                    secret = secret["data"].get(key, None)
 
-               vault_pillar[variable] = secret
+                    # Decode base64 data, if detected
+                    prefix = "base64:"
+                    if secret.startswith(prefix):
+                        secret = base64.b64decode(secret[len(prefix):].rstrip()
+
+                vault_pillar[variable] = secret
 
     return vault_pillar
