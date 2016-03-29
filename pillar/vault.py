@@ -206,7 +206,7 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
                     # Decode base64 data, if detected
                     prefix = "base64:"
                     if secret.startswith(prefix):
-                        secret = base64.b64decode(secret[len(prefix):].rstrip()
+                        secret = base64.b64decode(secret[len(prefix):]).rstrip()
 
                 vault_pillar[variable] = secret
 
