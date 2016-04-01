@@ -21,6 +21,7 @@ following options:
           app_id: (optional) Application ID for app-id authentication
           user_id: (optional) Explicit User ID for app-id authentication
           user_file: (optional) File to read for user-id value
+          unset_if_missing: (optional) Leave pillar key unset if Vault secret not found
 ```
 
 The `url` parameter is the full URL to the Vault API endpoint.
@@ -37,6 +38,11 @@ app-id authentication.
 
 The `user_file` parameter is the path to a file on the master to read for a
 ``user-id`` value if `user_id` is not specified.
+
+The `unset_if_missing` parameter determines behavior when the Vault secret is
+missing or otherwise inaccessible. If set to ``True``, the pillar key is left
+unset. If set to ``False``, the pillar key is set to ``None``. Default is
+``False``
 
 Mapping Vault Secrets to Minions
 --------------------------------
