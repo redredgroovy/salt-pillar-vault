@@ -16,7 +16,7 @@ following options:
     ext_pillar:
       - vault:
           url: https://vault:8200
-          config: /path/to/secret/definition.yml
+          config: Local path, salt:// path, or URL to vault secret configuration
           token: (optional) Explicit token for token authentication
           app_id: (optional) Application ID for app-id authentication
           user_id: (optional) Explicit User ID for app-id authentication
@@ -26,7 +26,7 @@ following options:
 
 The `url` parameter is the full URL to the Vault API endpoint.
 
-The `config` parameter is the path to the secret map YML file on the master.
+The `config` parameter is the local path, salt:// path, or URL to the secret map YML file to be parsed by the master.
 
 The `token` parameter is an explicit token to use for authentication, and it
 overrides all other authentication methods.
@@ -49,7 +49,7 @@ Mapping Vault Secrets to Minions
 
 The `config` parameter, above, is a path to the YML file which will be
 used for mapping secrets to minions. The map uses syntax similar to the
-top file:
+top file, and will be processed as a Jinja template:
 
 ```yaml
     'filter':
@@ -77,7 +77,9 @@ will be returned.
       'ssl_cert': '/secret/certs/domain?certificate'
       'ssl_key': '/secret/certs/domain?private_key'
     'db* and G@os.Ubuntu':
-      'db_pass': '/secret/passwords/database
+      'db_pass': '/secret/passwords/database'
+    '*':
+      'my_key': '/secret/certs/{{ grains.id }}?private_key'
 ```
 
 Authors

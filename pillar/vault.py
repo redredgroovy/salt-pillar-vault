@@ -87,6 +87,8 @@ import os
 import yaml
 
 # Import salt modules
+import salt.loader
+import salt.template
 import salt.utils.minions
 
 # Attempt to import the 'hvac' module
@@ -124,7 +126,7 @@ def _get_user_id(source="~/.vault-id"):
     """ Reads a UUID from file (default: ~/.vault-id)
     """
     source = os.path.abspath(os.path.expanduser(source))
-    LOG.debug("Reading '%s' for user_id")
+    LOG.debug("Reading '%s' for user_id", source)
 
     user_id = ""
 
@@ -178,8 +180,13 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
 
     # Read the secret map
     try:
-        with open(CONF["config"], "r") as raw_yml:
-            secret_map = yaml.safe_load(raw_yml) or {}
+        LOG.debug("Fetching '%s' for vault secret configuration", CONF["config"])
+        cached_file = __salt__['cp.get_url'](CONF["config"], None)
+        LOG.debug("Cached vault secret configuration at '%s', cached_file)
+
+        renderers = salt.loader.render(__opts__, __salt__)
+        raw_yml = salt.template.compile_template(cached_file, renderers, 'jinja').getvalue()
+        secret_map = yaml.safe_load(raw_yml) or {}
     except IOError as err:
         LOG.error("Unable to read secret mappings: %s" % err)
         return vault_pillar
