@@ -16,7 +16,7 @@ following options:
     ext_pillar:
       - vault:
           url: https://vault:8200
-          config: Local path, salt:// path, or URL to vault secret configuration
+          config: Local path to vault secret configuration on master
           token: (optional) Explicit token for token authentication
           app_id: (optional) Application ID for app-id authentication
           user_id: (optional) Explicit User ID for app-id authentication
@@ -26,7 +26,7 @@ following options:
 
 The `url` parameter is the full URL to the Vault API endpoint.
 
-The `config` parameter is the local path, salt:// path, or URL to the secret map YML file to be parsed by the master.
+The `config` parameter is the local path to the secret map YML file to be parsed by the master.
 
 The `token` parameter is an explicit token to use for authentication, and it
 overrides all other authentication methods.

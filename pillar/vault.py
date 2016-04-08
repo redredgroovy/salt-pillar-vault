@@ -179,16 +179,12 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
             CONF[key] = kwargs.get(key)
 
     # Read the secret map
-    try:
-        LOG.debug("Fetching '%s' for vault secret configuration", CONF["config"])
-        cached_file = __salt__['cp.get_url'](CONF["config"], None)
-        LOG.debug("Cached vault secret configuration at '%s', cached_file)
-
-        renderers = salt.loader.render(__opts__, __salt__)
-        raw_yml = salt.template.compile_template(cached_file, renderers, 'jinja').getvalue()
-        secret_map = yaml.safe_load(raw_yml) or {}
-    except IOError as err:
-        LOG.error("Unable to read secret mappings: %s" % err)
+    renderers = salt.loader.render(__opts__, __salt__)
+    raw_yml = salt.template.compile_template(CONF["config"], renderers, 'jinja')
+    if raw_yml:
+        secret_map = yaml.safe_load(raw_yml.getvalue()) or {}
+    else:
+        LOG.error("Unable to read secret mappings file '%s'", CONF["config"])
         return vault_pillar
 
     if not CONF["url"]:
