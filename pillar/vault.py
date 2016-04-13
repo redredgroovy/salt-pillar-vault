@@ -13,7 +13,7 @@ following options:
     ext_pillar:
       - vault:
           url: https://vault:8200
-          config: /path/to/secret/definition.yml
+          config: Local path or salt:// URL to secret configuration file
           token: Explicit token for token authentication
           app_id: Application ID for app-id authentication
           user_id: Explicit User ID for app-id authentication
@@ -22,7 +22,7 @@ following options:
 
 The ``url`` parameter is the full URL to the Vault API endpoint.
 
-The ``config`` parameter is the path to the secret map YML file on the master.
+The ``config`` parameter is the path or salt:// URL to the secret map YML file.
 
 The ``token`` parameter is an explicit token to use for authentication, and it
 overrides all other authentication methods.
@@ -88,6 +88,7 @@ import yaml
 
 # Import salt modules
 import salt.loader
+import salt.minion
 import salt.template
 import salt.utils.minions
 
@@ -177,6 +178,13 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
     for key in CONF:
         if kwargs.get(key, None):
             CONF[key] = kwargs.get(key)
+
+    # Resolve salt:// fileserver path, if necessary
+    if CONF["config"].startswith("salt://"):
+        local_opts = __opts__.copy()
+        local_opts["file_client"] = "local"
+        minion = salt.minion.MasterMinion(local_opts)
+        CONF["config"] = minion.functions["cp.cache_file"](CONF["config"])
 
     # Read the secret map
     renderers = salt.loader.render(__opts__, __salt__)
