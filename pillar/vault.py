@@ -169,6 +169,29 @@ def _authenticate(conn):
         conn.token = os.environ.get('VAULT_TOKEN')
 
 
+def couple(location, conn):
+    coupled_data = {}
+    if isinstance(location, basestring):
+        try:
+            (path, key) = location.split('?', 1)
+        except ValueError:
+            (path, key) = (location, None)
+        secret = conn.read(path)
+        if key:
+            secret = secret["data"].get(key, None)
+            prefix = "base64:"
+            if secret.startswith(prefix):
+                secret = base64.b64decode(secret[len(prefix):]).rstrip()
+        if secret or not CONF["unset_if_missing"]:
+            return secret
+    elif isinstance(location, dict):
+        for return_key, real_location in location.items():
+            coupled_data[return_key] = couple(real_location, conn)
+    if coupled_data or not CONF["unset_if_missing"]:
+        return coupled_data
+
+
+
 def ext_pillar(minion_id, pillar, *args, **kwargs):
     """ Main handler. Compile pillar data for the specified minion ID
     """
@@ -208,25 +231,7 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
     for filter, secrets in secret_map.items():
         if minion_id in ckminions.check_minions(filter, "compound"):
             for variable, location in secrets.items():
+              vault_pillar[variable] = couple(location,conn)
 
-                # Determine if a specific key was requested
-                try:
-                    (path, key) = location.split('?', 1)
-                except ValueError:
-                    (path, key) = (location, None)
-
-                # Return only the key value, if requested, otherwise return
-                # the entire secret json structure
-                secret = conn.read(path)
-                if key:
-                    secret = secret["data"].get(key, None)
-
-                    # Decode base64 data, if detected
-                    prefix = "base64:"
-                    if secret.startswith(prefix):
-                        secret = base64.b64decode(secret[len(prefix):]).rstrip()
-
-                if secret or not CONF["unset_if_missing"]:
-                    vault_pillar[variable] = secret
 
     return vault_pillar
