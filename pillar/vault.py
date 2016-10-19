@@ -170,6 +170,10 @@ def _authenticate(conn):
 
 
 def couple(location, conn):
+    """
+    If location is a dictionary, return a dictionary of k->v pairs looked up from vault.
+    If location is a string, return the value looked up from vault.
+    """
     coupled_data = {}
     if isinstance(location, basestring):
         try:
