@@ -170,6 +170,10 @@ def _authenticate(conn):
 
 
 def couple(location, conn):
+    """
+    If location is a dictionary, loop over its keys, and call couple() for each key
+    If location is a string, return the value looked up from vault.
+    """
     coupled_data = {}
     if isinstance(location, basestring):
         try:
