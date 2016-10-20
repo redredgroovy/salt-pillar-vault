@@ -170,10 +170,6 @@ def _authenticate(conn):
 
 
 def couple(location, conn):
-    """
-    If location is a dictionary, return a dictionary of k->v pairs looked up from vault.
-    If location is a string, return the value looked up from vault.
-    """
     coupled_data = {}
     if isinstance(location, basestring):
         try:
@@ -184,7 +180,7 @@ def couple(location, conn):
         if key:
             secret = secret["data"].get(key, None)
             prefix = "base64:"
-            if secret.startswith(prefix):
+            if secret and secret.startswith(prefix):
                 secret = base64.b64decode(secret[len(prefix):]).rstrip()
         if secret or not CONF["unset_if_missing"]:
             return secret
@@ -235,7 +231,9 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
     for filter, secrets in secret_map.items():
         if minion_id in ckminions.check_minions(filter, "compound"):
             for variable, location in secrets.items():
-              vault_pillar[variable] = couple(location,conn)
+              return_data = couple(location,conn)
+              if return_data:
+                vault_pillar[variable] = couple(location,conn)
 
 
     return vault_pillar
