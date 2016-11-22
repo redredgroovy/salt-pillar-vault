@@ -237,7 +237,7 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
             for variable, location in secrets.items():
               return_data = couple(location,conn)
               if return_data:
-                vault_pillar[variable] = couple(location,conn)
+                vault_pillar[variable] = return_data
 
 
     return vault_pillar
