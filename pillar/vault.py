@@ -215,7 +215,7 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
 
     # Read the secret map
     renderers = salt.loader.render(__opts__, __salt__)
-    raw_yml = salt.template.compile_template(CONF["config"], renderers, 'jinja')
+    raw_yml = salt.template.compile_template(CONF["config"], renderers, 'jinja',whitelist=[],blacklist=[])
     if raw_yml:
         secret_map = yaml.safe_load(raw_yml.getvalue()) or {}
     else:
