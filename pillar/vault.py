@@ -18,6 +18,9 @@ following options:
           app_id: Application ID for app-id authentication
           user_id: Explicit User ID for app-id authentication
           user_file: File to read for user-id value
+          role_id: Role ID for AppRole authentication
+          secret_id: Explicit Secret ID for AppRole authentication
+          secret_file: File to read for secret-id value
           unset_if_missing: Leave pillar key unset if Vault secret not found
 
 The ``url`` parameter is the full URL to the Vault API endpoint.
@@ -34,6 +37,14 @@ app-id authentication.
 
 The ``user_file`` parameter is the path to a file on the master to read for a
 ``user-id`` value if ``user_id`` is not specified.
+
+The ``role_id`` parameter is a Role ID to use for AppRole authentication.
+
+The ``secret_id`` parameter is an explicit Role ID to pair with ``role_id`` for
+AppRole authentication.
+
+The ``secret_file`` parameter is the path to a file on the master to read for a
+``secret-id`` value if ``secret_id`` is not specified.
 
 The ``unset_if_missing`` parameter determins behavior when the Vault secret is
 missing or otherwise inaccessible. If set to ``True``, the pillar key is left
@@ -110,6 +121,9 @@ CONF = {
     'app_id': None,
     'user_id': None,
     'user_file': None,
+    'role_id': None,
+    'secret_id': None,
+    'secret_file': None,
     'unset_if_missing': False
 }
 
@@ -123,8 +137,8 @@ def __virtual__():
         return False
 
 
-def _get_user_id(source="~/.vault-id"):
-    """ Reads a UUID from file (default: ~/.vault-id)
+def _get_id_from_file(source="/.vault-id"):
+    """ Reads a UUID from file (default: /.vault-id)
     """
     source = os.path.abspath(os.path.expanduser(source))
     LOG.debug("Reading '%s' for user_id", source)
@@ -149,15 +163,30 @@ def _authenticate(conn):
     if CONF["token"]:
         conn.token = CONF["token"]
 
+    # Check for explicit AppRole authentication
+    elif CONF["role_id"]:
+        if CONF["secret_id"]:
+            secret_id = CONF["secret_id"]
+        elif CONF["secret_file"]:
+            secret_id = _get_id_from_file(source=CONF["secret_file"])
+        else:
+            secret_id = _get_id_from_file()
+
+        # Perform AppRole authentication
+        result = conn.auth_approle(CONF["role_id"], secret_id)
+        # Required until https://github.com/ianunruh/hvac/pull/90
+        # is merged, due in hvac 0.3.0
+        conn.token = result['auth']['client_token']
+
     # Check for explicit app-id authentication
     elif CONF["app_id"]:
         # Check possible sources for user-id
         if CONF["user_id"]:
             user_id = CONF["user_id"]
         elif CONF["user_file"]:
-            user_id = _get_user_id(source=CONF["user_file"])
+            user_id = _get_id_from_file(source=CONF["user_file"])
         else:
-            user_id = _get_user_id()
+            user_id = _get_id_from_file()
 
         # Perform app-id authentication
         conn.auth_app_id(CONF["app_id"], user_id)
@@ -215,7 +244,7 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
 
     # Read the secret map
     renderers = salt.loader.render(__opts__, __salt__)
-    raw_yml = salt.template.compile_template(CONF["config"], renderers, 'jinja',whitelist=[],blacklist=[])
+    raw_yml = salt.template.compile_template(CONF["config"], renderers, 'jinja', whitelist=[], blacklist=[])
     if raw_yml:
         secret_map = yaml.safe_load(raw_yml.getvalue()) or {}
     else:
@@ -223,21 +252,21 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
         return vault_pillar
 
     if not CONF["url"]:
-        LOG.error("'url' must be specified for Vault configuration");
+        LOG.error("'url' must be specified for Vault configuration")
         return vault_pillar
 
     # Connect and authenticate to Vault
     conn = hvac.Client(url=CONF["url"])
     _authenticate(conn)
-    
+
     # Apply the compound filters to determine which secrets to expose for this minion
     ckminions = salt.utils.minions.CkMinions(__opts__)
     for filter, secrets in secret_map.items():
         if minion_id in ckminions.check_minions(filter, "compound"):
             for variable, location in secrets.items():
-              return_data = couple(location,conn)
-              if return_data:
-                vault_pillar[variable] = return_data
+                return_data = couple(location, conn)
+                if return_data:
+                    vault_pillar[variable] = return_data
 
 
     return vault_pillar

@@ -3,7 +3,7 @@ Saltstack external pillar for Hashicorp Vault with flexible minion targeting
 
 Requirements
 ------------
-* `hvac` python module (>= v0.2.8) 
+* `hvac` python module (>= v0.2.17)
 
 
 Example Configuration
@@ -21,6 +21,9 @@ following options:
           app_id: (optional) Application ID for app-id authentication
           user_id: (optional) Explicit User ID for app-id authentication
           user_file: (optional) File to read for user-id value
+          role_id: (optional) Role ID for AppRole authentication
+          secret_id: (optional) Explicit Secret ID for AppRole authentication
+          secret_file: (optional) File to read for secret-id value
           unset_if_missing: (optional) Leave pillar key unset if Vault secret not found
 ```
 
@@ -38,6 +41,14 @@ app-id authentication.
 
 The `user_file` parameter is the path to a file on the master to read for a
 ``user-id`` value if `user_id` is not specified.
+
+The ``role_id`` parameter is a Role ID to use for AppRole authentication.
+
+The ``secret_id`` parameter is an explicit Role ID to pair with ``role_id`` for
+AppRole authentication.
+
+The ``secret_file`` parameter is the path to a file on the master to read for a
+``secret-id`` value if ``secret_id`` is not specified.
 
 The `unset_if_missing` parameter determines behavior when the Vault secret is
 missing or otherwise inaccessible. If set to ``True``, the pillar key is left
