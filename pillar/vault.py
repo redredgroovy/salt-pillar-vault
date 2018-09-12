@@ -262,7 +262,11 @@ def ext_pillar(minion_id, pillar, *args, **kwargs):
     # Apply the compound filters to determine which secrets to expose for this minion
     ckminions = salt.utils.minions.CkMinions(__opts__)
     for filter, secrets in secret_map.items():
-        if minion_id in ckminions.check_minions(filter, "compound"):
+        minions =  ckminions.check_minions(filter, "compound")
+        if 'minions' in minions:
+            # In Salt 2018 this is now in a kwarg
+            minions = minions['minions']
+        if minion_id in minions:
             for variable, location in secrets.items():
                 return_data = couple(location, conn)
                 if return_data:
