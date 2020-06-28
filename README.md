@@ -1,5 +1,5 @@
 # salt-pillar-vault
-Saltstack external pillar for Hashicorp Vault with flexible minion targeting
+Hashicorp Vault pillar module for Saltstack with flexible minion targeting using a familiar top-file syntax. 
 
 Requirements
 ------------
@@ -16,31 +16,49 @@ following options:
     ext_pillar:
       - vault:
           url: https://vault:8200
-          config: Path or salt:// URL to vault secret configuration
+          config: Path or salt:// URL to vault secret mapping configuration
+          unset_if_missing: (optional) Leave pillar key unset if Vault secret not found
+          
+          memcached_socket: (optional) Path to a unix socket, e.g. /var/run/memcached/memcached.sock
+          memcached_expiration: (optional) Number of seconds to cache secrets for e.g. 60
+          memcached_timeout: (optional) Number of seconds to wait before timing out e.g. 1
+          
           token: (optional) Explicit token for token authentication
+          token_file: (optional) File containing a Vault token to use
+
           app_id: (optional) Application ID for app-id authentication
           user_id: (optional) Explicit User ID for app-id authentication
           user_file: (optional) File to read for user-id value
+
           role_id: (optional) Role ID for AppRole authentication
           secret_id: (optional) Explicit Secret ID for AppRole authentication
           secret_file: (optional) File to read for secret-id value
-          unset_if_missing: (optional) Leave pillar key unset if Vault secret not found
+
+            
 ```
 
-The `url` parameter is the full URL to the Vault API endpoint.
+The ``url`` parameter is the full URL to the Vault API endpoint.
 
-The `config` parameter is the path or salt:// URL to the secret map YML file to be parsed by the master.
+The ``config`` parameter is the path or salt:// URL to the secret map YML file to be parsed by the master.
 
-The `token` parameter is an explicit token to use for authentication, and it
+The `unset_if_missing` parameter determines behavior when the Vault secret is
+missing or otherwise inaccessible. If set to ``True``, the pillar key is left
+unset. If set to ``False``, the pillar key is set to ``None``. Default is
+``False``
+
+The ``token`` parameter is an explicit token to use for authentication and it
 overrides all other authentication methods.
 
-The `app_id` parameter is an Application ID to use for app-id authentication.
+The ``token_file`` parameter is the path to a file containing a token, such
+as output by Vault Agent.
 
-The `user_id` parameter is an explicit User ID to pair with ``app_id`` for
+The ``app_id`` parameter is an Application ID to use for app-id authentication.
+
+The ``user_id`` parameter is an explicit User ID to pair with ``app_id`` for
 app-id authentication.
 
-The `user_file` parameter is the path to a file on the master to read for a
-``user-id`` value if `user_id` is not specified.
+The ``user_file`` parameter is the path to a file on the master to read for a
+``user-id`` value if ``user_id`` is not specified.
 
 The ``role_id`` parameter is a Role ID to use for AppRole authentication.
 
@@ -50,10 +68,6 @@ AppRole authentication.
 The ``secret_file`` parameter is the path to a file on the master to read for a
 ``secret-id`` value if ``secret_id`` is not specified.
 
-The `unset_if_missing` parameter determines behavior when the Vault secret is
-missing or otherwise inaccessible. If set to ``True``, the pillar key is left
-unset. If set to ``False``, the pillar key is set to ``None``. Default is
-``False``
 
 Mapping Vault Secrets to Minions
 --------------------------------
